@@ -1,6 +1,7 @@
 {
+  "type": "module",
   "scripts": {
-    "start": "index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.26.4",
