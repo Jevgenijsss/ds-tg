@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TG → Discord Bot Setup</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --tg: #2AABEE;
+      --ds: #5865F2;
+      --accent: #2AABEE;
+      --text: #e8eaf0;
+      --muted: #8b8fa8;
+      --success: #3ba55d;
+      --error: #ed4245;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .logo {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* Progress */
+    .progress {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 40px;
+    }
+
+    .step-dot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.3s;
+    }
+
+    .dot.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(42, 171, 238, 0.1);
+    }
+
+    .dot.done {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+    }
+
+    .step-label {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .step-label.active { color: var(--accent); }
+    .step-label.done { color: var(--success); }
+
+    .connector {
+      width: 48px;
+      height: 2px;
+      background: var(--border);
+      margin-bottom: 18px;
+      transition: background 0.3s;
+    }
+
+    .connector.done { background: var(--success); }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+      display: none;
+    }
+
+    .card.active { display: block; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .card-icon.tg { background: rgba(42, 171, 238, 0.15); }
+    .card-icon.ds { background: rgba(88, 101, 242, 0.15); }
+    .card-icon.done-icon { background: rgba(59, 165, 93, 0.15); }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .card-desc {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* Instruction box */
+    .instruction {
+      background: rgba(42, 171, 238, 0.06);
+      border: 1px solid rgba(42, 171, 238, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    .instruction.ds {
+      background: rgba(88, 101, 242, 0.06);
+      border-color: rgba(88, 101, 242, 0.2);
+    }
+
+    .instruction ol, .instruction ul {
+      padding-left: 18px;
+    }
+
+    .instruction li { margin-bottom: 4px; }
+
+    .instruction a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .instruction a:hover { text-decoration: underline; }
+
+    .instruction .ds-link { color: var(--ds); }
+
+    /* Form */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    label span {
+      color: var(--muted);
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--accent); }
+    input.ds-focus:focus { border-color: var(--ds); }
+
+    input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 8px;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-tg { background: var(--tg); color: #fff; }
+    .btn-ds { background: var(--ds); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* Alert */
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .alert.error { background: rgba(237, 66, 69, 0.1); border: 1px solid rgba(237, 66, 69, 0.3); color: #ff7b7d; }
+    .alert.success { background: rgba(59, 165, 93, 0.1); border: 1px solid rgba(59, 165, 93, 0.3); color: #57d67a; }
+    .alert.show { display: block; }
+
+    /* Session box */
+    .session-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+      margin: 12px 0;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    /* Final step */
+    .railway-steps {
+      counter-reset: rs;
+    }
+
+    .railway-step {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+
+    .rs-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(42, 171, 238, 0.15);
+      border: 1px solid rgba(42, 171, 238, 0.3);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .rs-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+    .rs-text strong { color: var(--accent); }
+    .rs-text a { color: var(--accent); text-decoration: none; }
+    .rs-text a:hover { text-decoration: underline; }
+
+    .env-table {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .env-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .env-row:last-child { border-bottom: none; }
+
+    .env-key {
+      padding: 8px 12px;
+      color: var(--tg);
+      width: 200px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
+
+    .env-val {
+      padding: 8px 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .tag-tg { background: rgba(42,171,238,0.15); color: var(--tg); }
+    .tag-ds { background: rgba(88,101,242,0.15); color: var(--ds); }
+    .tag-done { background: rgba(59,165,93,0.15); color: var(--success); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 20px 0;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📡</div>
+  <h1>TG → Discord Bot Setup</h1>
+  <p>Follow the steps below — no coding required.</p>
+</header>
+
+<!-- Progress bar -->
+<div class="progress">
+  <div class="step-dot">
+    <div class="dot active" id="dot1">1</div>
+    <div class="step-label active" id="lbl1">Telegram</div>
+  </div>
+  <div class="connector" id="conn1"></div>
+  <div class="step-dot">
+    <div class="dot" id="dot2">2</div>
+    <div class="step-label" id="lbl2">Verify</div>
+  </div>
+  <div class="connector" id="conn2"></div>
+  <div class="step-dot">
+    <div class="dot" id="dot3">3</div>
+    <div class="step-label" id="lbl3">Discord</div>
+  </div>
+  <div class="connector" id="conn3"></div>
+  <div class="step-dot">
+    <div class="dot" id="dot4">4</div>
+    <div class="step-label" id="lbl4">Deploy</div>
+  </div>
+</div>
+
+<!-- STEP 1: Telegram credentials -->
+<div class="card active" id="step1">
+  <div class="card-header">
+    <div class="card-icon tg">✈️</div>
+    <h2>Telegram Credentials</h2>
+  </div>
+  <p class="card-desc">First, get your Telegram API keys. These let the bot read messages from your channel.</p>
+
+  <div class="instruction">
+    <ol>
+      <li>Open <a href="https://my.telegram.org" target="_blank">my.telegram.org</a> in a new tab</li>
+      <li>Log in with your phone number</li>
+      <li>Click <strong>"API Development Tools"</strong></li>
+      <li>Fill in any App name (e.g. <em>MyBot</em>) and short name (e.g. <em>mybot</em>)</li>
+      <li>Click <strong>"Create application"</strong></li>
+      <li>Copy the <strong>App api_id</strong> and <strong>App api_hash</strong> below</li>
+    </ol>
+  </div>
+
+  <div class="field">
+    <label>API ID <span>(a number, e.g. 1234567)</span></label>
+    <input type="text" id="apiId" placeholder="1234567" />
+  </div>
+
+  <div class="field">
+    <label>API Hash <span>(a long string)</span></label>
+    <input type="text" id="apiHash" placeholder="a1b2c3d4e5f6..." />
+  </div>
+
+  <div class="field">
+    <label>Your phone number <span>(with country code)</span></label>
+    <input type="text" id="phone" placeholder="+1234567890" />
+    <div class="hint">Telegram will send you a login code</div>
+  </div>
+
+  <div class="field">
+    <label>Telegram Channel <span>(the one to forward from)</span></label>
+    <input type="text" id="tgChannel" placeholder="@yourchannel" />
+    <div class="hint">Must start with @. You must be a member of this channel.</div>
+  </div>
+
+  <button class="btn btn-tg" onclick="startLogin()">Send me the code →</button>
+  <div class="alert error" id="err1"></div>
+</div>
+
+<!-- STEP 2: Verify code -->
+<div class="card" id="step2">
+  <div class="card-header">
+    <div class="card-icon tg">🔐</div>
+    <h2>Verify Your Identity</h2>
+  </div>
+  <p class="card-desc">Telegram sent a code to your phone (or Telegram app). Enter it below.</p>
+
+  <div class="field">
+    <label>Telegram login code</label>
+    <input type="text" id="tgCode" placeholder="12345" maxlength="10" />
+    <div class="hint">Check your Telegram app or SMS messages</div>
+  </div>
+
+  <button class="btn btn-tg" onclick="verifyCode()">Verify code →</button>
+  <button class="btn btn-outline" onclick="goTo(1)">← Back</button>
+  <div class="alert error" id="err2"></div>
+</div>
+
+<!-- STEP 3: Discord -->
+<div class="card" id="step3">
+  <div class="card-header">
+    <div class="card-icon ds">🎮</div>
+    <h2>Discord Setup</h2>
+  </div>
+  <p class="card-desc">Now connect your Discord bot and choose which channel to post announcements in.</p>
+
+  <div class="instruction ds">
+    <strong>Create a Discord bot:</strong>
+    <ol style="margin-top:8px">
+      <li>Go to <a href="https://discord.com/developers/applications" target="_blank" class="ds-link">discord.com/developers/applications</a></li>
+      <li>Click <strong>"New Application"</strong> → give it a name → Create</li>
+      <li>Go to the <strong>Bot</strong> tab → click <strong>"Reset Token"</strong> → copy the token</li>
+      <li>Scroll down, enable <strong>Message Content Intent</strong></li>
+      <li>Go to <strong>OAuth2 → URL Generator</strong>: check <em>bot</em>, then check <em>Send Messages</em> + <em>Embed Links</em></li>
+      <li>Open the generated URL → invite the bot to your server</li>
+    </ol>
+  </div>
+
+  <div class="instruction ds" style="margin-top: 12px;">
+    <strong>Get your channel ID:</strong>
+    <ol style="margin-top:8px">
+      <li>In Discord, go to <strong>Settings → Advanced → enable Developer Mode</strong></li>
+      <li>Right-click your <strong>#announcements</strong> channel → <strong>Copy Channel ID</strong></li>
+    </ol>
+  </div>
+
+  <div class="field">
+    <label>Discord Bot Token</label>
+    <input type="password" id="discordToken" class="ds-focus" placeholder="MTExxx..." />
+  </div>
+
+  <div class="field">
+    <label>Announcements Channel ID</label>
+    <input type="text" id="discordChannelId" class="ds-focus" placeholder="1234567890123456789" />
+  </div>
+
+  <button class="btn btn-ds" onclick="saveConfig()">Save & Continue →</button>
+  <button class="btn btn-outline" onclick="goTo(2)">← Back</button>
+  <div class="alert error" id="err3"></div>
+</div>
+
+<!-- STEP 4: Deploy -->
+<div class="card" id="step4">
+  <div class="card-header">
+    <div class="card-icon done-icon">🚀</div>
+    <h2>Deploy to Railway</h2>
+  </div>
+  <p class="card-desc">Almost done! Your config is saved. Now deploy the bot to Railway so it runs 24/7.</p>
+
+  <div class="railway-steps">
+    <div class="railway-step">
+      <div class="rs-num">1</div>
+      <div class="rs-text">Go to <a href="https://railway.app" target="_blank">railway.app</a> and sign in with GitHub</div>
+    </div>
+    <div class="railway-step">
+      <div class="rs-num">2</div>
+      <div class="rs-text">Click <strong>New Project → Deploy from GitHub repo</strong> → select <strong>ds-tg</strong></div>
+    </div>
+    <div class="railway-step">
+      <div class="rs-num">3</div>
+      <div class="rs-text">Go to the <strong>Variables</strong> tab and add these values:</div>
+    </div>
+  </div>
+
+  <div class="env-table" id="envTable">
+    <div class="env-row"><div class="env-key">TG_API_ID</div><div class="env-val" id="ev1">—</div></div>
+    <div class="env-row"><div class="env-key">TG_API_HASH</div><div class="env-val" id="ev2">—</div></div>
+    <div class="env-row"><div class="env-key">TG_SESSION</div><div class="env-val" id="ev3">—</div></div>
+    <div class="env-row"><div class="env-key">TG_CHANNEL</div><div class="env-val" id="ev4">—</div></div>
+    <div class="env-row"><div class="env-key">DISCORD_TOKEN</div><div class="env-val" id="ev5">—</div></div>
+    <div class="env-row"><div class="env-key">DISCORD_CHANNEL_ID</div><div class="env-val" id="ev6">—</div></div>
+  </div>
+
+  <button class="btn btn-tg" onclick="copyEnv()" id="copyBtn">📋 Copy all as .env format</button>
+
+  <hr class="divider" />
+
+  <div class="railway-step">
+    <div class="rs-num">4</div>
+    <div class="rs-text">Click <strong>Deploy</strong> — Railway will build and start the bot automatically.</div>
+  </div>
+  <div class="railway-step">
+    <div class="rs-num">5</div>
+    <div class="rs-text">Send a test message in your Telegram channel. It should appear in Discord within seconds! 🎉</div>
+  </div>
+
+  <div class="alert success show" style="margin-top: 16px;">
+    ✅ Your config has been saved to <code>.env</code> in the project folder.
+  </div>
+</div>
+
+<script>
+  let savedData = {};
+
+  function goTo(n) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+
+    for (let i = 1; i <= 4; i++) {
+      const dot = document.getElementById('dot' + i);
+      const lbl = document.getElementById('lbl' + i);
+      dot.className = 'dot' + (i < n ? ' done' : i === n ? ' active' : '');
+      lbl.className = 'step-label' + (i < n ? ' done' : i === n ? ' active' : '');
+      if (i < 4) {
+        document.getElementById('conn' + i).className = 'connector' + (i < n ? ' done' : '');
+      }
+    }
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function clearError(id) {
+    document.getElementById(id).classList.remove('show');
+  }
+
+  async function startLogin() {
+    clearError('err1');
+    const apiId = document.getElementById('apiId').value.trim();
+    const apiHash = document.getElementById('apiHash').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const tgChannel = document.getElementById('tgChannel').value.trim();
+
+    if (!apiId || !apiHash || !phone || !tgChannel) {
+      return showError('err1', 'Please fill in all fields.');
+    }
+
+    savedData = { apiId, apiHash, phone, tgChannel };
+
+    const btn = document.querySelector('#step1 .btn-tg');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Sending code...';
+
+    try {
+      const res = await fetch('/api/start-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiId, apiHash, phone })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send code');
+      if (data.phoneCodeHash) savedData.phoneCodeHash = data.phoneCodeHash;
+      goTo(2);
+    } catch (e) {
+      showError('err1', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Send me the code →';
+    }
+  }
+
+  async function verifyCode() {
+    clearError('err2');
+    const code = document.getElementById('tgCode').value.trim();
+    if (!code) return showError('err2', 'Please enter the code.');
+
+    const btn = document.querySelector('#step2 .btn-tg');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Verifying...';
+
+    try {
+      const res = await fetch('/api/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, hash: savedData.phoneCodeHash })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Invalid code');
+      savedData.session = data.session;
+      goTo(3);
+    } catch (e) {
+      showError('err2', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Verify code →';
+    }
+  }
+
+  async function saveConfig() {
+    clearError('err3');
+    const discordToken = document.getElementById('discordToken').value.trim();
+    const discordChannelId = document.getElementById('discordChannelId').value.trim();
+
+    if (!discordToken || !discordChannelId) {
+      return showError('err3', 'Please fill in both Discord fields.');
+    }
+
+    savedData.discordToken = discordToken;
+    savedData.discordChannelId = discordChannelId;
+
+    const btn = document.querySelector('#step3 .btn-ds');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Saving...';
+
+    try {
+      const res = await fetch('/api/save-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(savedData)
+      });
+      if (!res.ok) throw new Error('Failed to save config');
+
+      // Fill env table
+      document.getElementById('ev1').textContent = savedData.apiId;
+      document.getElementById('ev2').textContent = savedData.apiHash.slice(0,8) + '...';
+      document.getElementById('ev3').textContent = savedData.session.slice(0,16) + '...';
+      document.getElementById('ev4').textContent = savedData.tgChannel;
+      document.getElementById('ev5').textContent = savedData.discordToken.slice(0,10) + '...';
+      document.getElementById('ev6').textContent = savedData.discordChannelId;
+
+      goTo(4);
+    } catch (e) {
+      showError('err3', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Save & Continue →';
+    }
+  }
+
+  function copyEnv() {
+    const text = [
+      `TG_API_ID=${savedData.apiId}`,
+      `TG_API_HASH=${savedData.apiHash}`,
+      `TG_SESSION=${savedData.session}`,
+      `TG_CHANNEL=${savedData.tgChannel}`,
+      `DISCORD_TOKEN=${savedData.discordToken}`,
+      `DISCORD_CHANNEL_ID=${savedData.discordChannelId}`,
+    ].join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy all as .env format', 2000);
+    });
+  }
+</script>
+</body>
+</html>
