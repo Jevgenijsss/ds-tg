@@ -1,50 +1,102 @@
-# TG → Discord Bot
+# Telegram → Discord Forwarder
 
-Forwards messages from Telegram channels to Discord. One hosted instance, multiple friends each with their own Discord bot.
+Forwards new posts from Telegram channels to Discord channels. A single Telegram
+user session can serve multiple Discord bot connections managed through the web
+dashboard.
 
-## Architecture
+## What it forwards
 
-- **You** host this once on Render (free)
-- **Your friends** just create a Discord bot and give you the token + channel ID
-- No Telegram login required from friends
+- Text posts and captions
+- Photos, videos, audio, PDFs, and other documents up to 8 MB
+- A link to the original Telegram post when media is too large for Discord
 
-## Setup
+Posts are forwarded once. The app listens for Telegram updates and also polls
+configured channels every 30 seconds as a fallback.
 
-### 1. Get your Telegram session (run once locally)
+## Requirements
+
+- A Telegram API ID and API hash from [my.telegram.org](https://my.telegram.org)
+- A Telegram **user-account** session string
+- A Discord bot for every Discord destination
+- The Discord bot invited to its server with **Send Messages**, **Embed Links**,
+  and **Attach Files** permissions
+
+The Telegram account represented by `TG_SESSION` must be a member of every
+source channel. You do not need to own those channels: public channels can be
+added by username, such as `@ru2ch`.
+
+## Local setup
+
+Install dependencies and create a Telegram session:
 
 ```bash
 npm install
-node setup.js
+npm run setup
 ```
 
-Follow the wizard → copy the session string.
+Copy the generated values into a local `.env` file:
 
-### 2. Deploy to Render
+```env
+TG_API_ID=123456
+TG_API_HASH=your_api_hash
+TG_SESSION=your_telegram_session_string
+```
 
-- New project → **Background Worker**
-- Connect this GitHub repo
-- Build command: `npm install`
-- Start command: `node index.js`
-- Add environment variables:
-  - `TG_API_ID`
-  - `TG_API_HASH`
-  - `TG_SESSION`
+Start the dashboard:
 
-### 3. Add connections via the dashboard
+```bash
+npm start
+```
 
-Visit your Render URL → dashboard → Add Connection.
+Open `http://localhost:3001` and add a connection. For a public source channel,
+enter its username as `@channelname` (not `https://t.me/channelname`).
 
-Fill in:
-- Telegram channel (e.g. `@mychannel`)
-- Discord bot token
-- Discord channel ID
+## Deploy to Fly.io
 
-The bot restarts and starts forwarding immediately.
+Install and sign in to the Fly CLI, then create the app if needed:
 
-## For your friends
+```bash
+fly launch
+```
 
-They only need to:
-1. Create a Discord bot at discord.com/developers/applications
-2. Invite it to their server with Send Messages + Embed Links permissions
-3. Send you: their Discord bot token + channel ID + Telegram channel name
-4. You add it in the dashboard — done
+Set the Telegram credentials as Fly secrets:
+
+```bash
+fly secrets set TG_API_ID=123456 TG_API_HASH=your_api_hash TG_SESSION=your_telegram_session_string
+```
+
+Deploy:
+
+```bash
+fly deploy
+```
+
+Open the dashboard with:
+
+```bash
+fly open
+```
+
+The `fly.toml` configuration includes a persistent volume at `/app/data` for
+dashboard connections. Do not store secrets in Git: `.env` and
+`data/configs.json` are intentionally ignored.
+
+## Logging and troubleshooting
+
+On a healthy startup, logs include:
+
+```text
+✅ Telegram connected
+👂 Listening to ... channel(s)
+```
+
+When a post is received, the app logs the source channel and number of matching
+forwarding connections. For Fly logs:
+
+```bash
+fly logs
+```
+
+For an external channel, confirm the exact Telegram account that created
+`TG_SESSION` is still subscribed to it. Only future posts are forwarded; the
+first polling check establishes a baseline and does not replay channel history.
